@@ -3,7 +3,7 @@ const axios = require('axios');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const apiUrl = 'https://api.dmarket.com/price-aggregator/v1/aggregated-prices';
+  const apiUrl = 'https://skinbaron.de';
 
   try {
     const response = await axios.get(apiUrl);
