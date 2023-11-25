@@ -1,18 +1,22 @@
-const express = require('express');
 const axios = require('axios');
-const router = express.Router();
 
-router.get('/', async (req, res) => {
-  const apiUrl = 'https://api.bitskins.com/market/insell/730';
+const getBitskins = async (_req, res, next) => {
+  const apiKey = "a1b1c4e460e59dfbe9b88fd7df3b1ce5e259a2e55b718dceffcd50acacce1e46";
 
   try {
-    const response = await axios.get(apiUrl);
-    console.log('Request success', response.data);
-    res.status(200).json(response.data);
+    const Bitskins = await axios.get("https://api.bitskins.com/market/insell/730", {
+      "headers": {
+        "content-type": "application/json",
+        "x-apikey": apiKey,
+      },
+    })
+    res.status(200).json(Bitskins.data);
   } catch (error) {
-    console.error('Request failed', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({error: `Error getting Bitskins data: ${error}` });
   }
-});
+  next();
+};
 
-module.exports = router;
+module.exports = {
+  getBitskins,
+};
