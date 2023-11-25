@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const dmarketController = require("../controllers/Dmarket-controller")
 
-router.get('/', dmarketController.getDmarket);
+// router.get('/', dmarketController.createTestTarget);
 
-router.get('/:skinName', dmarketController.getDmarketName);
+router.get('/:skinName', dmarketController.getDmarketSkin);
 
 module.exports = router;

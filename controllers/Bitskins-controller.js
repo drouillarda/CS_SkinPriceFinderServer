@@ -29,7 +29,7 @@ const getBitskinsName = async (_req, res, next) => {
       },
     });
 
-    const skinsFound = Bitskins.data.list;
+    const { list } = Bitskins.data;
     if (searchSkins) {
       const selectedSkin = skinsFound.find(skin => skin.name === searchSkins)
       if (!selectedSkin) {
@@ -37,7 +37,7 @@ const getBitskinsName = async (_req, res, next) => {
       }
       return res.status(200).json(selectedSkin);
     }
-    res.status(200).json(skinsFound);
+    res.status(200).json(list);
   } catch (error) {
     res.status(500).json({ error: `Error getting skin: ${error}` });
   }
