@@ -1,6 +1,7 @@
 const nacl = require('tweetnacl');
 const https = require('https');
 const axios = require('axios');
+const { error } = require('console');
 
 function byteToHexString(uint8arr) {
     if (!uint8arr) {
@@ -43,82 +44,79 @@ function hex2ascii(hexx) {
 // insert your api keys
 const publicKey = "54e133c630ec6779ced05a1e1ef5999dae4b50ee4e6ea95db75577cef0ae544c";
 const secretKey = "45aa3d6fdb06ae6ed8f7a5c4ffe357719d5b098da02e83337bebaa86eb0cf3bc54e133c630ec6779ced05a1e1ef5999dae4b50ee4e6ea95db75577cef0ae544c";
-const host = 'api.dmarket.com';
 
-function getSkinOfferFromMarket() {
-    const requestOptions = {
-        host: host,
-        path: '/exchange/v1/offers-by-title?gameId=a8db&limit=1&currency=USD' + queryParams,
-        method: 'GET',
-    };
-
-    // you can use a more high-level wrapper for requests instead of native https.request
-    // check https://github.com/axios/axios as an example
-    return new Promise(function(resolve, reject) {
-        const request = https.request(requestOptions, (response) => {
-            let body = '';
-            response.on('data', (chunk) => {
-                body += (chunk);
-            });
-            // resolve on end
-            response.on('end', () => {
-                try {
-                    body = JSON.parse(Buffer.concat(body).toString());
-                } catch(e) {
-                    reject(e);
-                }
-                resolve(body['objects'][0]);
-            });
-        });
-        request.end();
+async function getSkinOfferFromMarket(searchSkins) {
+  const encodedSearchSkins = encodeURIComponent(searchSkins);
+  const apiUrl = `https://api.dmarket.com/exchange/v1/offers-by-title?Title=${encodedSearchSkins}`;
+    try {
+      const response = await axios.get(apiUrl, {headers: {'X-Api-Key': publicKey,},
     });
+      const body = response.data;
+    return body['objects'][0] && body['objects'][0] || null;
+    } catch (error) {
+      console.error('Error making request:', error.message);
+    }
 }
 
-function buildTargetBodyFromOffer(offer) {
+async function buildTargetBodyFromOffer(offer) {
     return {
         "targets": [
             {
-                "amount": 1, "gameId": offer.gameId, "price": {"amount": "2", "currency": "USD"},
-                "attributes": {
-                    "gameId": offer.gameId, "categoryPath": offer.extra.categoryPath, "title": offer.title,
-                    "name": offer.title,
-                    "image": offer.image,
-                    "ownerGets": {"amount": "1", "currency": "USD"}
+              "amount": 1,
+              "gameId": offer.gameId,
+              "price": {"amount": "2", "currency": "USD"},
+              "attributes": {
+                  "gameId": offer.gameId,
+                  "categoryPath": offer.extra && offer.extra.categoryPath ? offer.extra.categoryPath : null,
+                  "title": offer.title,
+                  "name": offer.title,
+                  "image": offer.image,
+                  "ownerGets": {"amount": "1", "currency": "USD"}
                 }
             }]
     }
 }
 
-function sign(string) {
+async function sign(string) {
     const signatureBytes = nacl.sign(new TextEncoder('utf-8').encode(string), hexStringToByte(secretKey));
     return byteToHexString(signatureBytes).substr(0,128);
 }
 
-function sendNewTargetRequest(requestOptions, targetRequestBody) {
-    const req = https.request(requestOptions, (response) => {
-        console.log('statusCode:', response.statusCode);
-        response.on('data', (responseBodyBytes) => {
-            console.log(hex2ascii(byteToHexString(responseBodyBytes)));
-        });
-    });
+ async function sendNewTargetRequest(requestOptions, targetRequestBody) {
+    return new Promise((resolve, reject) => {
+      const req = https.request(requestOptions, (response) => {
+          let body = '';
+          response.on('data', (chunk) => {
+              body += (chunk);
+          });
+          // resolve on end
+          response.on('end', () => {
+            resolve(body);
+          });
+      });
+      req.on('error', (e) => {
+        reject(e);
+      })
 
-    req.on('error', (e) => {
-        console.error(e);
-    });
-
-    req.write(targetRequestBody);
-    req.end();
+      req.write(targetRequestBody);
+      req.end();
+  });
 }
 
 async function getDmarketSkin(req, res) {
   try {
     const { searchSkins } = req.params;
+    console.log(req.params);
     if (!searchSkins) {
       return res.status(400).json({ success: false, error: 'Search query is required' });
     }
-    const result = {};
     const skinOffer = await getSkinOfferFromMarket(searchSkins);
-    console.log('Offer was found: ' + randomOffer.title);
+    console.log('Offer:', skinOffer);
+
+    if (!skinOffer || !skinOffer.objects || skinOffer.objects.length === 0) {
+      return res.status(404).json({ success: false, error: 'Skin offer not found' });
+    }
+    console.log('Offer was found: ' + skinOffer.title);
 
     const method = "GET";
     const apiUrlPath = "/exchange/v1/offers-by-title";
@@ -129,7 +127,7 @@ async function getDmarketSkin(req, res) {
     const signature = sign(stringToSign);
     const requestOptions = {
         host: host,
-        path: apiUrlPath + `?search=${encodeURIComponent(searchSkins)}`,
+        path: apiUrlPath + `?Title=${searchSkins}&Limit=100`,
         method: method,
         headers: {
             "X-Api-Key": publicKey,
@@ -139,13 +137,18 @@ async function getDmarketSkin(req, res) {
         }
     };
 
-    const responseBody = sendNewTargetRequest(requestOptions, targetRequestBody);
-    console.log('Target request sent successfully.', responseBody);
-    result.responseBody = responseBody;
+    const responseBody = await sendNewTargetRequest(requestOptions, targetRequestBody);
+    console.log('Dmarket API Response:', responseBody);
+ 
+    const parsedResponseBody = JSON.parse(responseBody);
+
+    const skinOffers = parsedResponseBody;
+    console.log('Target request sent successfully.', skinOffers);
+    result.responseBody = parsedResponseBody;
 
     res.status(200).json({ success: true, result })
   } catch (error) {
-    console.error('Error creating test target:', error.message);
+    console.error('Error getting skin offer from the market:', error.message);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 

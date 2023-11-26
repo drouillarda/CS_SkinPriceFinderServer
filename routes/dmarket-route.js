@@ -3,6 +3,6 @@ const dmarketController = require("../controllers/Dmarket-controller")
 
 // router.get('/', dmarketController.createTestTarget);
 
-router.get('/:skinName', dmarketController.getDmarketSkin);
+router.get('/:searchSkins', dmarketController.getDmarketSkin);
 
 module.exports = router;
