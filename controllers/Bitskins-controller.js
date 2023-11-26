@@ -18,8 +18,8 @@ const getBitskins = async (_req, res, next) => {
   next();
 };
 
-const getBitskinsName = async (_req, res, next) => {
-    const { searchSkins } = _req.query;
+const getBitskinsName = async (req, res, next) => {
+    const { searchSkins } = req.params;
 
     try {
     const Bitskins = await axios.get("https://api.bitskins.com/market/insell/730", {
@@ -31,7 +31,9 @@ const getBitskinsName = async (_req, res, next) => {
 
     const { list } = Bitskins.data;
     if (searchSkins) {
-      const selectedSkin = skinsFound.find(skin => skin.name === searchSkins)
+      const lowerCaseSearch = searchSkins.toLowerCase();
+      const selectedSkin = list.find(skin => skin.name.toLowerCase() === lowerCaseSearch);
+      
       if (!selectedSkin) {
       return res.status(404).json({ message: `Skin with name ${searchSkins} not found.` });
       }

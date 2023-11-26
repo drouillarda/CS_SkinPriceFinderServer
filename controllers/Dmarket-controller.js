@@ -110,9 +110,9 @@ function sendNewTargetRequest(requestOptions, targetRequestBody) {
     req.end();
 }
 
-async function getDmarketSkin(_req, res) {
+async function getDmarketSkin(req, res) {
   try {
-    const { searchSkins } = _req.query;
+    const { searchSkins } = req.params;
     if (!searchSkins) {
       return res.status(400).json({ success: false, error: 'Search query is required' });
     }

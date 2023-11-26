@@ -3,7 +3,7 @@ const bitskinsController = require("../controllers/Bitskins-controller");
 
 router.get('/', bitskinsController.getBitskins);
 
-router.get('/:skinName', bitskinsController.getBitskinsName);
+router.get('/:searchSkins', bitskinsController.getBitskinsName);
 
 
 module.exports = router;
