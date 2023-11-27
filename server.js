@@ -21,6 +21,9 @@ app.use("/api/Skinport", skinportRoutes);
 const steamRoutes = require('./routes/steam-route');
 app.use("/api/Steam", steamRoutes);
 
+const skinbaronRoutes = require('./routes/skinbaron-route');
+app.use("/api/Skinbaron", skinbaronRoutes);
+
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}...`)
 });
