@@ -15,6 +15,12 @@ app.use ("/api/Bitskins", bitskinsRoutes);
 const dmarketRoutes = require('./routes/dmarket-route');
 app.use("/api/Dmarket", dmarketRoutes);
 
+const skinportRoutes = require('./routes/skinport-route');
+app.use("/api/Skinport", skinportRoutes);
+
+const steamRoutes = require('./routes/steam-route');
+app.use("/api/Steam", steamRoutes);
+
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}...`)
 });

@@ -82,9 +82,9 @@ async function sign(string) {
     return byteToHexString(signatureBytes).substr(0,128);
 }
 
- async function sendNewTargetRequest(requestOptions, targetRequestBody) {
+ async function sendNewTargetRequest(targetRequestBody) {
     return new Promise((resolve, reject) => {
-      const req = https.request(requestOptions, (response) => {
+      const req = https.request((response) => {
           let body = '';
           response.on('data', (chunk) => {
               body += (chunk);
@@ -106,38 +106,36 @@ async function sign(string) {
 async function getDmarketSkin(req, res) {
   try {
     const { searchSkins } = req.params;
+    const encodedSearchSkins = encodeURIComponent(searchSkins);
     console.log(req.params);
     if (!searchSkins) {
       return res.status(400).json({ success: false, error: 'Search query is required' });
     }
     const skinOffer = await getSkinOfferFromMarket(searchSkins);
     console.log('Offer:', skinOffer);
-
-    if (!skinOffer || !skinOffer.objects || skinOffer.objects.length === 0) {
-      return res.status(404).json({ success: false, error: 'Skin offer not found' });
-    }
     console.log('Offer was found: ' + skinOffer.title);
 
     const method = "GET";
-    const apiUrlPath = "/exchange/v1/offers-by-title";
+    const apiUrlPath = `https://api.dmarket.com/exchange/v1/offers-by-title?Title=${encodedSearchSkins}&Limit=100`;
     const targetRequestBody = JSON.stringify(buildTargetBodyFromOffer(skinOffer));
     console.log(targetRequestBody);
     const timestamp = Math.floor(new Date().getTime() / 1000);
     const stringToSign = method + apiUrlPath + targetRequestBody + timestamp;
     const signature = sign(stringToSign);
-    const requestOptions = {
-        host: host,
-        path: apiUrlPath + `?Title=${searchSkins}&Limit=100`,
-        method: method,
-        headers: {
-            "X-Api-Key": publicKey,
-            "X-Request-Sign": "dmar ed25519 " + signature,
-            "X-Sign-Date": timestamp,
-            'Content-Type': 'application/json',
-        }
-    };
-
-    const responseBody = await sendNewTargetRequest(requestOptions, targetRequestBody);
+    // const requestOptions = {
+    //     host: host,
+    //     path: apiUrlPath,
+    //     method: method,
+    //     headers: {"X-Api-Key": publicKey, "X-Request-Sign": "dmar ed25519 " + signature, "X-Sign-Date": timestamp, 'Content-Type': 'application/json',}
+    // };
+    try {
+      const response = await axios.get(apiUrlPath, {headers: {"X-Api-Key": publicKey, "X-Request-Sign": "dmar ed25519 " + signature, "X-Sign-Date": timestamp, 'Content-Type': 'application/json',}
+    });
+      const responseBody = response.data;
+    } catch (error) {
+      console.error('Error making request:', error.message);
+    }
+    const responseBody = await sendNewTargetRequest(targetRequestBody);
     console.log('Dmarket API Response:', responseBody);
  
     const parsedResponseBody = JSON.parse(responseBody);
