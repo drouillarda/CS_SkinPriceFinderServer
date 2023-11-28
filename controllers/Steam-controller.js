@@ -1,5 +1,5 @@
 const axios = require('axios');
-const apiKey = "Y1CbYDU4fKPowWTk1dHEFqXMNqc";
+const apiKey = process.env.STEAM_KEY;
 
 const getSteam = async (_req, res, next) => {
 

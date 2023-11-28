@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-const apiKey = "5dacb9346f5e4cf0bb052f382ca57ef6";
-const secretKey = "KcOEUi20duhCyTeft8vgTsVKWuGObyhWZKOmsDl2FS41ROWua7LqSwCinFjEiL8CY+pWWTm9ES0sy30+vQASHA==";
+const apiKey = process.env.SKINPORT_KEY;
+const secretKey = process.env.SKINPORT_SECRET_KEY;
 
 const getSkinportSkins = async (_req, res, next) => {
     try {
