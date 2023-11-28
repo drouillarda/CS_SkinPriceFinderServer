@@ -42,8 +42,8 @@ function hex2ascii(hexx) {
 }
 
 // insert your api keys
-const publicKey = "54e133c630ec6779ced05a1e1ef5999dae4b50ee4e6ea95db75577cef0ae544c";
-const secretKey = "45aa3d6fdb06ae6ed8f7a5c4ffe357719d5b098da02e83337bebaa86eb0cf3bc54e133c630ec6779ced05a1e1ef5999dae4b50ee4e6ea95db75577cef0ae544c";
+const publicKey = process.env.PUBLIC_KEY;
+const secretKey = process.env.SECRET_KEY;
 
 async function getSkinOfferFromMarket(searchSkins) {
   const encodedSearchSkins = encodeURIComponent(searchSkins);
@@ -82,9 +82,9 @@ async function sign(string) {
     return byteToHexString(signatureBytes).substr(0,128);
 }
 
- async function sendNewTargetRequest(targetRequestBody) {
+ async function sendNewTargetRequest(requestOptions, targetRequestBody) {
     return new Promise((resolve, reject) => {
-      const req = https.request((response) => {
+      const req = https.request(requestOptions, (response) => {
           let body = '';
           response.on('data', (chunk) => {
               body += (chunk);
@@ -122,12 +122,11 @@ async function getDmarketSkin(req, res) {
     const timestamp = Math.floor(new Date().getTime() / 1000);
     const stringToSign = method + apiUrlPath + targetRequestBody + timestamp;
     const signature = sign(stringToSign);
-    // const requestOptions = {
-    //     host: host,
-    //     path: apiUrlPath,
-    //     method: method,
-    //     headers: {"X-Api-Key": publicKey, "X-Request-Sign": "dmar ed25519 " + signature, "X-Sign-Date": timestamp, 'Content-Type': 'application/json',}
-    // };
+    const requestOptions = {
+        path: apiUrlPath,
+        method: method,
+        headers: {"X-Api-Key": publicKey, "X-Request-Sign": "dmar ed25519 " + signature, "X-Sign-Date": timestamp, 'Content-Type': 'application/json',}
+    };
     try {
       const response = await axios.get(apiUrlPath, {headers: {"X-Api-Key": publicKey, "X-Request-Sign": "dmar ed25519 " + signature, "X-Sign-Date": timestamp, 'Content-Type': 'application/json',}
     });
@@ -135,7 +134,7 @@ async function getDmarketSkin(req, res) {
     } catch (error) {
       console.error('Error making request:', error.message);
     }
-    const responseBody = await sendNewTargetRequest(targetRequestBody);
+    const responseBody = await sendNewTargetRequest(requestOptions, targetRequestBody);
     console.log('Dmarket API Response:', responseBody);
  
     const parsedResponseBody = JSON.parse(responseBody);

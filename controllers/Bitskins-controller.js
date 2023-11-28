@@ -1,5 +1,5 @@
 const axios = require('axios');
-const apiKey = "a1b1c4e460e59dfbe9b88fd7df3b1ce5e259a2e55b718dceffcd50acacce1e46";
+const apiKey = process.env.BITSKINS_KEY;
 
 const getBitskins = async (_req, res, next) => {
 
